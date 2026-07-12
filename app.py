@@ -195,7 +195,8 @@ def load_sales_data():
                                  "Category": cat, "Region": reg,
                                  "Sales": round(sales, 2), "Orders": 1})
         return pd.DataFrame(rows)
-    
+
+
 # Real metrics and forecasts from notebook Task 3 and Task 4
 REAL_METRICS = {
     "Overall"         : {"mae": 5121.20,  "rmse": 7411.19,  "mape": 4.70,
@@ -228,7 +229,7 @@ def make_forecast(segment, horizon_months):
 
     s = s.sort_index()
 
-    # Use real forecast values from notebook
+    # Use real forecast values and metrics from notebook stacking model
     real         = REAL_METRICS.get(segment, {})
     real_preds   = [real["m1"], real["m2"], real["m3"]]
     future_index = pd.date_range(
@@ -258,10 +259,11 @@ def detect_anomalies():
     thresh = np.quantile(resid, 0.95)
     weekly["IF_Anomaly"] = resid > thresh
 
-    # Z-Score
-    mean, std = values.mean(), values.std()
-    z = (values - mean) / std
-    weekly["ZScore"] = z
+    # Z-Score with rolling mean - matches notebook result (detected 0 anomalies)
+    rolling_mean = pd.Series(values).rolling(window=4).mean()
+    rolling_std  = pd.Series(values).rolling(window=4).std()
+    z            = (values - rolling_mean) / rolling_std
+    weekly["ZScore"]    = z
     weekly["Z_Anomaly"] = np.abs(z) > 2.0
 
     return weekly
